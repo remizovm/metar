@@ -2,7 +2,6 @@
 Golang METAR parser
 
 TODO:
- - Code refactoring
  - Add examples
  - Add tests
 
