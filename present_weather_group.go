@@ -10,12 +10,14 @@ func init() {
 	presentWeatherGroupRe = regexp.MustCompile(presentWeatherGroupPattern)
 }
 
-func ParsePresentWeatherGroup(m string) []string {
-	var rawWeatherChunks []string
-	matches := presentWeatherGroupRe.FindAllStringSubmatch(m, -1)
-	for _, match := range matches {
-		rawWeatherChunks = append(rawWeatherChunks, match[0])
-
+func (r *Report) ParsePresentWeatherGroup(m string) {
+	if !presentWeatherGroupRe.MatchString(m) {
+		return
 	}
-	return rawWeatherChunks
+
+	matches := presentWeatherGroupRe.FindAllStringSubmatch(m, -1)
+
+	for _, match := range matches {
+		r.RawWeatherChunks = append(r.RawWeatherChunks, match[0])
+	}
 }

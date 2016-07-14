@@ -1,44 +1,50 @@
 package metar
 
-import (
-	"log"
-	"regexp"
-)
+import "regexp"
 
 const RVRPattern = `R(\d\d[RLC]?)\/([MP]?\d{4})(V([MP]?\d{4}))?FT`
 
 var RVRRe *regexp.Regexp
 
+type RVR struct {
+	Runway     string
+	Direction  string
+	IsVariable bool
+	Value      string
+	Units      string
+	Low        string
+	High       string
+}
+
 func init() {
 	RVRRe = regexp.MustCompile(RVRPattern)
 }
 
-func ParseRVRGroup(m string) {
-	if !RVRRe.MatchString(m) {
+func (r *Report) ParseRVRGroup() {
+	rvr := &RVR{}
+
+	if !RVRRe.MatchString(r.raw) {
 		return
 	}
-	matches := RVRRe.FindAllStringSubmatch(m, -1)
-	runway := matches[0][1]
-	runwayDirection := "undefined"
-	runwayVariable := false
-	if len(runway) == 3 {
-		runwayDirection = string(runway[2])
-		runway = runway[:2]
+
+	matches := RVRRe.FindAllStringSubmatch(r.raw, -1)
+	rvr.Runway = matches[0][1]
+	if len(rvr.Runway) == 3 {
+		rvr.Direction = string(rvr.Runway[2])
+		rvr.Runway = rvr.Runway[:2]
 	}
-	runwayValue := matches[0][2]
-	runwayUnits := "FT" //FIXME
+
+	rvr.Value = matches[0][2]
+	rvr.Units = "FT" //FIXME
 	runwayLow := matches[0][2]
 	runwayHigh := matches[0][4]
+
 	if len(runwayHigh) != 0 {
-		runwayVariable = true
+		rvr.IsVariable = true
+		rvr.Value = ""
+		rvr.High = runwayHigh
+		rvr.Low = runwayLow
 	}
-	log.Printf("Runway: %s", runway)
-	log.Printf("Runway Direction: %s", runwayDirection)
-	if runwayVariable {
-		log.Printf("Runway Low: %s", runwayLow)
-		log.Printf("Runway High: %s", runwayHigh)
-	} else {
-		log.Printf("Runway Value: %s", runwayValue)
-	}
-	log.Printf("Runway Units: %s", runwayUnits)
+
+	r.RVR = rvr
 }

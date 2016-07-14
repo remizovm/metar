@@ -1,9 +1,6 @@
 package metar
 
-import (
-	"log"
-	"regexp"
-)
+import "regexp"
 
 const (
 	skyConditionPattern          = `([A-Z]{3})((\d{3})|\/\/\/)`
@@ -17,47 +14,44 @@ var (
 	skyClearRe              *regexp.Regexp
 )
 
+type SkyCondition struct {
+	SkyCover           string
+	SkyLayerHeight     string
+	VerticalVisibility string
+	IsClear            bool
+}
+
 func init() {
 	skyConditionRe = regexp.MustCompile(skyConditionPattern)
 	skyVerticalVisibilityRe = regexp.MustCompile(skyVerticalVisibilityPattern)
 	skyClearRe = regexp.MustCompile(skyClearPattern)
 }
 
-func ParseSkyConditionGroup(m string) {
-	cond := func(m string) {
-		skyCover := ""
-		skyLayerHeight := ""
-		if !skyConditionRe.MatchString(m) {
-			return
-		}
-		matches := skyConditionRe.FindAllStringSubmatch(m, -1)
-		skyCover = matches[0][1]
-		skyLayerHeight = matches[0][2]
-		log.Printf("Sky Cover: %s", skyCover)
-		log.Printf("Sky Layer Height: %s", skyLayerHeight)
+func (sc *SkyCondition) condition(m string) {
+	if !skyConditionRe.MatchString(m) {
+		return
+	}
+	matches := skyConditionRe.FindAllStringSubmatch(m, -1)
+	sc.SkyCover = matches[0][1]
+	sc.SkyLayerHeight = matches[0][2]
+}
+
+func (sc *SkyCondition) verticalVisibility(m string) {
+	if !skyVerticalVisibilityRe.MatchString(m) {
+		return
+	}
+	sc.VerticalVisibility = skyVerticalVisibilityRe.FindAllStringSubmatch(m, -1)[0][1]
+}
+
+func (r *Report) ParseSkyConditionGroup() {
+	sc := &SkyCondition{}
+
+	sc.condition(r.raw)
+	sc.verticalVisibility(r.raw)
+
+	if skyClearRe.MatchString(r.raw) {
+		sc.IsClear = true
 	}
 
-	vv := func(m string) {
-		verticalVisibility := ""
-		if !skyVerticalVisibilityRe.MatchString(m) {
-			return
-		}
-		matches := skyVerticalVisibilityRe.FindAllStringSubmatch(m, -1)
-		verticalVisibility = matches[0][1]
-		log.Printf("Vertical Visibility: %s", verticalVisibility)
-	}
-
-	sc := func(m string) {
-		skyClear := ""
-		if !skyClearRe.MatchString(m) {
-			return
-		}
-		matches := skyClearRe.FindAllStringSubmatch(m, -1)
-		skyClear = matches[0][1]
-		log.Printf("Sky Clear: %s", skyClear)
-	}
-
-	cond(m)
-	vv(m)
-	sc(m)
+	r.SkyCondition = sc
 }

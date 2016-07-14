@@ -1,9 +1,6 @@
 package metar
 
-import (
-	"log"
-	"regexp"
-)
+import "regexp"
 
 const visibilityPattern = ` (.{1,5})SM `
 
@@ -13,23 +10,15 @@ func init() {
 	visibilityRe = regexp.MustCompile(visibilityPattern)
 }
 
-func ParseVisibilityGroup(m string) {
-	if !visibilityRe.MatchString(m) {
+func (r *Report) ParseVisibilityGroup() {
+	if !visibilityRe.MatchString(r.raw) {
 		return
 	}
-	surfaceVisibility := ""
-	isAutomated := false
-	rawVisibilityValue := visibilityRe.FindAllStringSubmatch(m, -1)[0][1]
-	if rawVisibilityValue[0] == 'M' {
-		isAutomated = true
-		surfaceVisibility = rawVisibilityValue[1:]
-	} else {
-		surfaceVisibility = rawVisibilityValue
-	}
 
-	if isAutomated {
-		log.Printf("Surface visibility is less than: %s", surfaceVisibility)
-	} else {
-		log.Printf("Surface visibility: %s", surfaceVisibility)
+	r.Visibility = visibilityRe.FindAllStringSubmatch(r.raw, -1)[0][1]
+
+	if r.Visibility[0] == 'M' {
+		r.IsVisibilityAutomated = true
+		r.Visibility = r.Visibility[1:]
 	}
 }

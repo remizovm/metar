@@ -1,7 +1,6 @@
 package metar
 
 import (
-	"log"
 	"regexp"
 	"strings"
 )
@@ -34,55 +33,54 @@ func init() {
 	windDirectionFullRe = regexp.MustCompile(windDirectionFullPattern)
 }
 
-func ParseWindGroup(m string) {
-	calmWind := false
-	windDirectionVariable := false
-	windDirection := ""
-	windSpeed := ""
-	windGust := ""
-	windDirectionFrom := ""
-	windDirectionTo := ""
+type Wind struct {
+	IsCalm              bool
+	IsVariableDirection bool
+	Direction           string
+	Speed               string
+	Gust                string
+	DirectionFrom       string
+	DirectionTo         string
+}
 
-	if strings.Contains(m, "00000KT") {
-		calmWind = true
+func (r *Report) ParseWindGroup() {
+	w := &Wind{}
+
+	if strings.Contains(r.raw, "00000KT") {
+		w.IsCalm = true
 	} else {
-		if windDirectionFullRe.MatchString(m) {
-			matches := windDirectionVariableHighRe.FindAllStringSubmatch(m, -1)
-			windDirection = matches[0][1]
-			windSpeed = matches[0][2]
-			windGust = matches[0][3]
-			windDirectionVariable = true
-			windDirectionFrom = matches[0][4]
-			windDirectionTo = matches[0][5]
-		} else if windDirectionVariableHighRe.MatchString(m) {
-			matches := windDirectionVariableHighRe.FindAllStringSubmatch(m, -1)
-			windDirection = matches[0][1]
-			windSpeed = matches[0][2]
-			windDirectionVariable = true
-			windDirectionFrom = matches[0][3]
-			windDirectionTo = matches[0][4]
-		} else if windDirectionVariableRe.MatchString(m) {
-			matches := windDirectionVariableRe.FindAllStringSubmatch(m, -1)
-			windDirectionVariable = true
-			windSpeed = matches[0][1]
-		} else if windDirectionSpeedGustRe.MatchString(m) {
-			matches := windDirectionSpeedGustRe.FindAllStringSubmatch(m, -1)
-			windDirection = matches[0][1]
-			windSpeed = matches[0][2]
-			windGust = matches[0][3]
-		} else if windDirectionSpeedRe.MatchString(m) {
-			matches := windDirectionSpeedRe.FindAllStringSubmatch(m, -1)
-			windDirection = matches[0][1]
-			windSpeed = matches[0][2]
-		} else if windDirectionRe.MatchString(m) {
-			windDirection = windDirectionRe.FindAllStringSubmatch(m, -1)[0][1]
+		if windDirectionFullRe.MatchString(r.raw) {
+			matches := windDirectionVariableHighRe.FindAllStringSubmatch(r.raw, -1)
+			w.Direction = matches[0][1]
+			w.Speed = matches[0][2]
+			w.Gust = matches[0][3]
+			w.IsVariableDirection = true
+			w.DirectionFrom = matches[0][4]
+			w.DirectionTo = matches[0][5]
+		} else if windDirectionVariableHighRe.MatchString(r.raw) {
+			matches := windDirectionVariableHighRe.FindAllStringSubmatch(r.raw, -1)
+			w.Direction = matches[0][1]
+			w.Speed = matches[0][2]
+			w.IsVariableDirection = true
+			w.DirectionFrom = matches[0][3]
+			w.DirectionTo = matches[0][4]
+		} else if windDirectionVariableRe.MatchString(r.raw) {
+			matches := windDirectionVariableRe.FindAllStringSubmatch(r.raw, -1)
+			w.IsVariableDirection = true
+			w.Speed = matches[0][1]
+		} else if windDirectionSpeedGustRe.MatchString(r.raw) {
+			matches := windDirectionSpeedGustRe.FindAllStringSubmatch(r.raw, -1)
+			w.Direction = matches[0][1]
+			w.Speed = matches[0][2]
+			w.Gust = matches[0][3]
+		} else if windDirectionSpeedRe.MatchString(r.raw) {
+			matches := windDirectionSpeedRe.FindAllStringSubmatch(r.raw, -1)
+			w.Direction = matches[0][1]
+			w.Speed = matches[0][2]
+		} else if windDirectionRe.MatchString(r.raw) {
+			w.Direction = windDirectionRe.FindAllStringSubmatch(r.raw, -1)[0][1]
 		}
 	}
-	log.Printf("Calm Wind: %v", calmWind)
-	log.Printf("Wind Direction: %s", windDirection)
-	log.Printf("Wind Speed: %s", windSpeed)
-	log.Printf("Wind Gust: %s", windGust)
-	log.Printf("Variable wind directioin: %v", windDirectionVariable)
-	log.Printf("Wind directioin from: %s", windDirectionFrom)
-	log.Printf("Wind directioin to: %s", windDirectionTo)
+
+	r.Wind = w
 }

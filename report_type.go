@@ -2,9 +2,15 @@ package metar
 
 import "strings"
 
-func ParseReportType(m string) string {
-	if strings.Contains(m, "SPECI") {
-		return "SPECI"
+const (
+	speci = "SPECI"
+	metar = "METAR"
+)
+
+func (r *Report) ParseReportType() {
+	if strings.Contains(r.raw, speci) {
+		r.ReportType = speci
+	} else {
+		r.ReportType = metar
 	}
-	return "METAR"
 }

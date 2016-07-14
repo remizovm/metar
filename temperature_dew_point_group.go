@@ -1,9 +1,6 @@
 package metar
 
-import (
-	"log"
-	"regexp"
-)
+import "regexp"
 
 const temperatureDewPointPattern = `(M?\d\d)\/(M?\d\d)`
 
@@ -13,13 +10,13 @@ func init() {
 	temperatureDewPointRe = regexp.MustCompile(temperatureDewPointPattern)
 }
 
-func ParseTemperatureDewPointGroup(m string) {
-	if !temperatureDewPointRe.MatchString(m) {
+func (r *Report) ParseTemperatureDewPointGroup() {
+	if !temperatureDewPointRe.MatchString(r.raw) {
 		return
 	}
-	matches := temperatureDewPointRe.FindAllStringSubmatch(m, -1)
-	temperature := matches[0][1]
-	dewPoint := matches[0][2]
-	log.Printf("Temperature: %s", temperature)
-	log.Printf("Dew Point: %s", dewPoint)
+
+	matches := temperatureDewPointRe.FindAllStringSubmatch(r.raw, -1)
+
+	r.Temperature = matches[0][1]
+	r.DewPoint = matches[0][2]
 }

@@ -10,9 +10,10 @@ func init() {
 	altimeterRe = regexp.MustCompile(altimeterPattern)
 }
 
-func ParseAltimeter(m string) string {
-	if !altimeterRe.MatchString(m) {
-		return ""
+func (r *Report) ParseAltimeter() {
+	if !altimeterRe.MatchString(r.raw) {
+		return
 	}
-	return altimeterRe.FindAllStringSubmatch(m, -1)[0][1]
+
+	r.Altimeter = altimeterRe.FindAllStringSubmatch(r.raw, -1)[0][1]
 }

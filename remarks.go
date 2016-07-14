@@ -10,9 +10,10 @@ func init() {
 	remarksRe = regexp.MustCompile(remarksPattern)
 }
 
-func parseRemarks(m string) string {
-	if !remarksRe.MatchString(m) {
-		return ""
+func (r *Report) ParseRemarks() {
+	if !remarksRe.MatchString(r.raw) {
+		return
 	}
-	return remarksRe.FindAllStringSubmatch(m, -1)[0][1]
+
+	r.Remarks = remarksRe.FindAllStringSubmatch(r.raw, -1)[0][1]
 }

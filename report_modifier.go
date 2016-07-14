@@ -10,9 +10,10 @@ func init() {
 	reportModifierRe = regexp.MustCompile(reportModifierPattern)
 }
 
-func ParseReportModifier(m string) string {
-	if !reportModifierRe.MatchString(m) {
-		return ""
+func (r *Report) ParseReportModifier() {
+	if !reportModifierRe.MatchString(r.raw) {
+		return
 	}
-	return reportModifierRe.FindAllStringSubmatch(m, -1)[0][1]
+
+	r.ReportModifier = reportModifierRe.FindAllStringSubmatch(r.raw, -1)[0][1]
 }

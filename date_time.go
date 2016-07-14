@@ -10,9 +10,10 @@ func init() {
 	dateTimeRe = regexp.MustCompile(dateTimePattern)
 }
 
-func ParseDateTime(m string) string {
-	if !dateTimeRe.MatchString(m) {
-		return ""
+func (r *Report) ParseDateTime() {
+	if !dateTimeRe.MatchString(r.raw) {
+		return
 	}
-	return dateTimeRe.FindAllStringSubmatch(m, -1)[0][1]
+
+	r.DateTime = dateTimeRe.FindAllStringSubmatch(r.raw, -1)[0][1]
 }
