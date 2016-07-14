@@ -1,0 +1,2 @@
+# metar
+Golang METAR parser
