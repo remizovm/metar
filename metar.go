@@ -2,17 +2,22 @@ package metar
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 )
 
 var (
-	ErrInvalidReport = errors.New("Invalid report")
-	ErrTypeNotFound  = errors.New("Type of the report could not be determined")
+	ErrInvalidReport     = errors.New("Invalid report")
+	ErrTypeNotFound      = errors.New("Type of the report could not be determined")
+	ErrStationIDNotFound = errors.New("Could not find station identifier")
 )
 
 type Report struct {
-	Type   string
+	Type      string
+	StationID string
+
 	chunks []string
+	raw    string
 }
 
 func Parse(raw string) (*Report, error) {
@@ -24,13 +29,34 @@ func Parse(raw string) (*Report, error) {
 	r := &Report{
 		Type:   "METAR",
 		chunks: chunks,
+		raw:    raw,
 	}
 
 	if err := r.parseStatus(); err != nil {
 		return nil, err
 	}
 
+	if err := r.parseStationID(); err != nil {
+		return nil, err
+	}
+
 	return r, nil
+}
+
+func (r *Report) parseStationID() error {
+	re := regexp.MustCompile("\\s([A-Z]{4})\\s")
+	if !re.MatchString(r.raw) {
+		return ErrStationIDNotFound
+	}
+	matches := re.FindAllStringSubmatch(r.raw, -1)
+	if len(matches) == 0 {
+		return ErrStationIDNotFound
+	}
+	if matches[0][1] != "AUTO" {
+		r.StationID = matches[0][1]
+		return nil
+	}
+	return ErrStationIDNotFound
 }
 
 func (r *Report) parseStatus() error {
