@@ -2,20 +2,17 @@ package metar
 
 import (
 	"errors"
-	"regexp"
 	"strings"
 )
 
-var ErrInvalidReport = errors.New("Invalid report")
+var (
+	ErrInvalidReport = errors.New("Invalid report")
+	ErrTypeNotFound  = errors.New("Type of the report could not be determined")
+)
 
 type Report struct {
-	Type string
-}
-
-var typeRe *regexp.Regexp
-
-func init() {
-	typeRe = regexp.MustCompile("SPECI\\s")
+	Type   string
+	chunks []string
 }
 
 func Parse(raw string) (*Report, error) {
@@ -23,11 +20,35 @@ func Parse(raw string) (*Report, error) {
 	if len(chunks) == 1 {
 		return nil, ErrInvalidReport
 	}
-	m := &Report{
-		Type: "METAR",
+
+	r := &Report{
+		Type:   "METAR",
+		chunks: chunks,
 	}
-	if typeRe.MatchString(raw) {
-		m.Type = "SPECI"
+
+	if err := r.parseStatus(); err != nil {
+		return nil, err
 	}
-	return m, nil
+
+	return r, nil
+}
+
+func (r *Report) parseStatus() error {
+	for i := range r.chunks {
+		if r.chunks[i] == "METAR" {
+			r.Type = "METAR"
+			r.chunks = removeIndex(r.chunks, i)
+			return nil
+		} else if r.chunks[i] == "SPECI" {
+			r.Type = "SPECI"
+			r.chunks = removeIndex(r.chunks, i)
+			return nil
+		}
+	}
+
+	return ErrTypeNotFound
+}
+
+func removeIndex(s []string, i int) []string {
+	return append(s[:i], s[i+1:]...)
 }
