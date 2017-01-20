@@ -20,18 +20,22 @@ const (
 )
 
 type Report struct {
-	Type            string
-	StationID       string
-	Day             int
-	Minute          int
-	Second          int
-	Modifier        string
-	WindDirection   int
-	WindSpeed       int
-	WindGust        int
-	Visibility      int
-	RunwayNumber    int
-	RunwayDirection string
+	Type              string
+	StationID         string
+	Day               int
+	Minute            int
+	Second            int
+	Modifier          string
+	WindDirection     int
+	WindSpeed         int
+	WindGust          int
+	Visibility        int
+	RunwayNumber      int
+	RunwayDirection   string
+	RunwayValue       int
+	RunwayValueFrom   int
+	RunwayValueTo     int
+	IsVaryingRVRValue bool
 
 	chunks []string
 	raw    string
@@ -84,6 +88,7 @@ func (r *Report) parseRVRGroup() error {
 	if len(matches) < 3 {
 		return nil
 	}
+	// Parsing Runway Number and direction
 	rawRunwayNumberStr := matches[1]
 	if len(rawRunwayNumberStr) == 3 {
 		r.RunwayDirection = string(rawRunwayNumberStr[len(rawRunwayNumberStr)-1:])
@@ -93,6 +98,34 @@ func (r *Report) parseRVRGroup() error {
 		return err
 	}
 	r.RunwayNumber = runwayNumber
+	if !strings.Contains(matches[2], "V") {
+		// Parsing the actual Runway value
+		rawRunwayValueStr := strings.TrimLeft(matches[2], "0")
+		runwayValue, err := strconv.Atoi(rawRunwayValueStr)
+		if err != nil {
+			return err
+		}
+		r.RunwayValue = runwayValue
+	} else {
+		// We've got varying RVR value
+		valList := strings.Split(matches[2], "V")
+		// From
+		rawRunwayValueFromStr := strings.TrimLeft(valList[0], "0")
+		runwayValueFrom, err := strconv.Atoi(rawRunwayValueFromStr)
+		if err != nil {
+			return err
+		}
+		r.RunwayValueFrom = runwayValueFrom
+		// To
+		rawRunwayValueToStr := strings.TrimLeft(valList[1], "0")
+		runwayValueTo, err := strconv.Atoi(rawRunwayValueToStr)
+		if err != nil {
+			return err
+		}
+		r.RunwayValueTo = runwayValueTo
+		// Setting the flag to indicate RVR variety
+		r.IsVaryingRVRValue = true
+	}
 	return nil
 }
 
