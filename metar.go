@@ -20,16 +20,18 @@ const (
 )
 
 type Report struct {
-	Type          string
-	StationID     string
-	Day           int
-	Minute        int
-	Second        int
-	Modifier      string
-	WindDirection int
-	WindSpeed     int
-	WindGust      int
-	Visibility    int
+	Type            string
+	StationID       string
+	Day             int
+	Minute          int
+	Second          int
+	Modifier        string
+	WindDirection   int
+	WindSpeed       int
+	WindGust        int
+	Visibility      int
+	RunwayNumber    int
+	RunwayDirection string
 
 	chunks []string
 	raw    string
@@ -69,7 +71,29 @@ func Parse(raw string) (*Report, error) {
 		return nil, err
 	}
 
+	if err := r.parseRVRGroup(); err != nil {
+		return nil, err
+	}
+
 	return r, nil
+}
+
+func (r *Report) parseRVRGroup() error {
+	re := regexp.MustCompile(`R(\d{1,2}[L,R,C]{0,1})\/(\d{4}|\d{4}V\d{4})FT`)
+	matches := re.FindStringSubmatch(r.raw)
+	if len(matches) < 3 {
+		return nil
+	}
+	rawRunwayNumberStr := matches[1]
+	if len(rawRunwayNumberStr) == 3 {
+		r.RunwayDirection = string(rawRunwayNumberStr[len(rawRunwayNumberStr)-1:])
+	}
+	runwayNumber, err := strconv.Atoi(string(rawRunwayNumberStr[0:2]))
+	if err != nil {
+		return err
+	}
+	r.RunwayNumber = runwayNumber
+	return nil
 }
 
 func (r *Report) parseVisibilityGroup() error {
