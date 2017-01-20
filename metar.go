@@ -99,33 +99,47 @@ func (r *Report) parseRVRGroup() error {
 	}
 	r.RunwayNumber = runwayNumber
 	if !strings.Contains(matches[2], "V") {
-		// Parsing the actual Runway value
-		rawRunwayValueStr := strings.TrimLeft(matches[2], "0")
-		runwayValue, err := strconv.Atoi(rawRunwayValueStr)
-		if err != nil {
+		if err := r.getNormalRVR(matches[2]); err != nil {
 			return err
 		}
-		r.RunwayValue = runwayValue
 	} else {
-		// We've got varying RVR value
-		valList := strings.Split(matches[2], "V")
-		// From
-		rawRunwayValueFromStr := strings.TrimLeft(valList[0], "0")
-		runwayValueFrom, err := strconv.Atoi(rawRunwayValueFromStr)
-		if err != nil {
+		if err := r.getVaryingRVR(matches[2]); err != nil {
 			return err
 		}
-		r.RunwayValueFrom = runwayValueFrom
-		// To
-		rawRunwayValueToStr := strings.TrimLeft(valList[1], "0")
-		runwayValueTo, err := strconv.Atoi(rawRunwayValueToStr)
-		if err != nil {
-			return err
-		}
-		r.RunwayValueTo = runwayValueTo
-		// Setting the flag to indicate RVR variety
-		r.IsVaryingRVRValue = true
 	}
+	return nil
+}
+
+func (r *Report) getNormalRVR(raw string) error {
+	// Parsing the actual Runway value
+	rawRunwayValueStr := strings.TrimLeft(raw, "0")
+	runwayValue, err := strconv.Atoi(rawRunwayValueStr)
+	if err != nil {
+		return err
+	}
+	r.RunwayValue = runwayValue
+	return nil
+}
+
+func (r *Report) getVaryingRVR(raw string) error {
+	// We've got varying RVR value
+	valList := strings.Split(raw, "V")
+	// From
+	rawRunwayValueFromStr := strings.TrimLeft(valList[0], "0")
+	runwayValueFrom, err := strconv.Atoi(rawRunwayValueFromStr)
+	if err != nil {
+		return err
+	}
+	r.RunwayValueFrom = runwayValueFrom
+	// To
+	rawRunwayValueToStr := strings.TrimLeft(valList[1], "0")
+	runwayValueTo, err := strconv.Atoi(rawRunwayValueToStr)
+	if err != nil {
+		return err
+	}
+	r.RunwayValueTo = runwayValueTo
+	// Setting the flag to indicate RVR variety
+	r.IsVaryingRVRValue = true
 	return nil
 }
 
