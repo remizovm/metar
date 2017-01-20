@@ -2,6 +2,7 @@ package metar
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,6 +13,11 @@ var (
 	ErrTypeNotFound      = errors.New("Type of the report could not be determined")
 	ErrStationIDNotFound = errors.New("Could not find station identifier")
 	ErrDateNotFound      = errors.New("Could not find timestamp")
+)
+
+var (
+	weatherDescriptorList = []string{"MI", "PR", "BC", "DR", "BL", "SH", "TS", "FZ"}
+	weatherPhenomenaList  = []string{"DZ", "RA", "SN", "SG", "IC", "PL", "GR", "GS", "UP", "BR", "FG", "FU", "VA", "DU", "SA", "HZ", "PY", "PO", "SQ", "FC", "SS", "DS"}
 )
 
 const (
@@ -36,6 +42,7 @@ type Report struct {
 	RunwayValueFrom   int
 	RunwayValueTo     int
 	IsVaryingRVRValue bool
+	PresentWeatherRaw string
 
 	chunks []string
 	raw    string
@@ -79,7 +86,39 @@ func Parse(raw string) (*Report, error) {
 		return nil, err
 	}
 
+	r.parsePresentWeather()
+
 	return r, nil
+}
+
+func (r *Report) parsePresentWeather() {
+	r.parseWeatherDescriptor()
+	r.parseWeatherPhenomena()
+	if r.PresentWeatherRaw != "" {
+		r.PresentWeatherRaw = strings.Trim(r.PresentWeatherRaw, " ")
+	}
+}
+
+func (r *Report) parseWeatherDescriptor() {
+	for _, c := range r.chunks {
+		for _, d := range weatherDescriptorList {
+			if c == d {
+				r.PresentWeatherRaw = d
+				return
+			}
+		}
+	}
+}
+
+func (r *Report) parseWeatherPhenomena() {
+	for _, c := range r.chunks {
+		for _, p := range weatherPhenomenaList {
+			if c == p {
+				r.PresentWeatherRaw = fmt.Sprintf("%s %s", r.PresentWeatherRaw, p)
+				return
+			}
+		}
+	}
 }
 
 func (r *Report) parseRVRGroup() error {
